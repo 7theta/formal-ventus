@@ -1,0 +1,7 @@
+{:lein true
+ :dev-http {3449 "example/resources/public"}
+ :builds {:dev {:target :browser
+                :output-dir "example/resources/public/js/compiled"
+                :asset-path "/js/compiled"
+                :modules {:main {:init-fn formal-ventus.example.core/init}}
+                :compiler-options {:infer-externs :auto}}}}

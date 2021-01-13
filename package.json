@@ -1,0 +1,10 @@
+{
+    "name": "formal-ventus",
+    "version": "0.1.0",
+    "devDependencies": {
+        "react": "17.0.1",
+        "react-dom": "17.0.1",
+        "shadow-cljs": "2.11.13"
+    },
+    "dependencies": {}
+}
