@@ -5,9 +5,13 @@
             [ventus.util.classes :refer [join-classes]]
             [utilis.js :as j]
             [utilis.types.number :refer [string->double string->long]]
+            [inflections.core :as inflections]
             [reagent.core :as r]))
 
-;;; Forms
+;; TODO
+;; - handle required inputs (add asterisk to label)
+;; - handle map-level errors properly
+;; - finish handling sequential input
 
 (defn error-typography
   [{:keys [error]}]
@@ -22,30 +26,40 @@
                   :else error))
               error))]))
 
+(defn form-label
+  [{:keys [props]}]
+  (into [:label (merge {:class-name "block text-sm font-medium text-gray-700"} props)]
+        (r/children (r/current-component))))
+
 (defn form
   [{:keys [schema] :as props}]
   [f/form (assoc props :namespace :ventus)])
+
+(defn labelize
+  [label]
+  (when label
+    (inflections/titleize label)))
 
 (defn form-item
   []
   (r/create-class
    {:render (fn [this]
-              (let [{:keys [namespace error label label-position input-container-classes]
-                     :or {label-position :start}} (r/props this)
-                    {:keys [input-id]} (r/state this)]
+              (let [{:keys [id namespace error label label-position input-container-classes]
+                     :or {label-position :start}
+                     :as props} (r/props this)
+                    {:keys [input-id]} (r/state this)
+                    label (or label (when id (labelize id)))]
                 [:div {:class-name "py-2"}
                  [:div {:class-name input-container-classes}
                   (when (and label (= label-position :start))
-                    [:label {:for input-id} label])
+                    [form-label {:for input-id} label])
                   (when-let [input (first (r/children this))]
                     (c/assoc-prop input :id input-id))
                   (when (and label (= label-position :end))
-                    [:label {:for input-id} label])]
+                    [form-label {:for input-id} label])]
                  [error-typography {:error error}]]))
     :get-initial-state (fn [this]
-                         {:input-id (str "html-input-" (gensym))})}))
-
-;;; Inputs
+                         {:input-id (str "ventus-input-" (gensym))})}))
 
 (defn string-input
   [{:keys [on-change error] :as props}]
@@ -81,20 +95,37 @@
                                (r/set-state this {:checked checked}))}]]))
 
 (defn map-input
-  [{:keys [error inputs id]}]
-  [:div
-   (into [:div {:class-name (join-classes (when id :pl-6))}]
-         (concat (->> inputs
-                      (sort-by first)
-                      (map second))
-                 [[error-typography {:error error}]]))])
+  [{:keys [index value error inputs id title subtitle]}]
+  [:div {:class-name (join-classes
+                      :p-4
+                      (when (and index (pos? index)) :mt-2))}
+   [:div
+    (when title
+      [tw/typography {:variant :h3
+                      :text-size :lg
+                      :classes {:text-color [:leadinfg-6 :font-medium :text-gray-900]}}
+       title])
+    (when subtitle
+      [tw/typography {:variant :p
+                      :text-size :sm
+                      :classes {:text-color :text-gray-500}}
+       subtitle])]
+   (into
+    [:div {:class-name (when (or title subtitle) :mt-2)}]
+    (concat
+     (map second inputs)
+     (when (and error (seq value))
+       [[:div {:class-name :mt-2}
+         [error-typography {:error error}]]])))])
 
 (defn sequential-input
   [{:keys [inputs on-change value error] :as props}]
   (into [:div]
         (concat inputs
-                [[:button {:on-click #(on-change (conj value nil))} "Add"]
-                 [error-typography {:error error}]])))
+                [[:button {:on-click #(on-change (conj value nil))} "Add"]]
+                (when error
+                  [[:div {:class-name :mt-2}
+                    [error-typography {:error error}]]]))))
 
 (f/reg-input :ventus/integer integer-input)
 (f/reg-input :ventus/number integer-input)

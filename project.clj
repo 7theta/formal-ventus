@@ -4,6 +4,7 @@
                  [com.7theta/utilis "1.10.0"]
                  [com.7theta/formal "0.1.0"]
                  [com.7theta/ventus "0.1.12"]
+                 [inflections "0.13.2"]
                  [reagent "1.0.0"]]
   :profiles {:dev {:source-paths ["src" "example/src" "checkouts/formal/src" "checkouts/ventus/src"]
                    :dependencies [[thheller/shadow-cljs "2.11.13"]]}})
