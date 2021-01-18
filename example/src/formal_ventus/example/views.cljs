@@ -7,7 +7,7 @@
     {:title "Profile"
      :subtitle "This information will be displayed publicly so be careful what you share."}
     [:map
-     [:username :string]
+     [:username {:optional true} :string]
      [:about :string]]]
    [:personal-information
     {:title "Personal Information"
@@ -15,6 +15,7 @@
     [:map
      [:first-name :string]
      [:last-name :string]
+     [:age {:default-value 30} :int]
      [:email-address :string]
      [:country [:enum :united-states :canada]]
      [:street-address :string]
