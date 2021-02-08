@@ -48,7 +48,7 @@
         (r/children (r/current-component))))
 
 (defn form
-  [{:keys [schema] :as props}]
+  [{:keys [schema default-value on-change inputs] :as props}]
   [:form
    [f/form (assoc props :namespace :ventus)]])
 
@@ -107,13 +107,12 @@
   (let [this (r/current-component)
         {:keys [checked] :or {checked default-value}} (r/state this)
         {:keys [error] :as props} (update-error props)]
-    [form-item (assoc props
-                      :label-position :end
-                      :input-container-classes [:flex :justify-start :items-center])
-     [switch/switch {:checked (boolean checked)
-                     :on-change #(let [checked (not checked)]
-                                   (on-change checked)
-                                   (r/set-state this {:checked checked}))}]]))
+    [form-item props
+     [:div {:class-name (tw [:mr-2])}
+      [switch/switch {:checked (boolean checked)
+                      :on-change #(let [checked (not checked)]
+                                    (on-change checked)
+                                    (r/set-state this {:checked checked}))}]]]))
 
 (defn enum-input
   [{:keys [on-change error children] :as props}]
@@ -123,7 +122,7 @@
                        (let [id (str option)]
                          {:id id :value option})) children)
         {:keys [default-handled selected-id]
-         :or {selected-id (or (:default-value props)
+         :or {selected-id (or (not-empty (str (:default-value props)))
                               (:id (first options)))}} (r/state this)
         lookup (->> options
                     (map (fn [{:keys [id] :as option}]
