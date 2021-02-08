@@ -4,12 +4,15 @@
             [ventus-ui.input :as input]
             [ventus-ui.select :as select]
             [ventus-ui.switch :as switch]
+            [ventus-ui.button :as button]
             [tailwind.core :refer [tw]]
             [utilis.js :as j]
             [utilis.types.number :refer [string->double string->long]]
             [clojure.set :refer [rename-keys]]
             [inflections.core :as inflections]
             [reagent.core :as r]))
+
+(def form-attributes [:action :method :on-submit])
 
 (defn labelize
   [label]
@@ -49,8 +52,10 @@
 
 (defn form
   [{:keys [schema default-value on-change inputs] :as props}]
-  [:form
-   [f/form (assoc props :namespace :ventus)]])
+  (into
+   [:form (select-keys props form-attributes)
+    [f/form (apply dissoc (assoc props :namespace :ventus) form-attributes)]]
+   (r/children (r/current-component))))
 
 (defn form-item
   []
@@ -81,13 +86,20 @@
     (dissoc props :error)))
 
 (defn string-input
-  [{:keys [on-change] :as props}]
+  [{:keys [on-change type] :as props}]
   (let [{:keys [error] :as props} (update-error props)]
     [form-item props
-     [input/input (-> props
-                      (select-keys [:default-value :placeholder])
-                      (assoc :type :text
-                             :validation (when error {:status :error})
+     [input/input (-> (merge {:type :text} props)
+                      (select-keys [:type
+                                    :required
+                                    :disabled
+                                    :auto-focus
+                                    :placeholder
+                                    :default-value
+                                    :auto-complete
+                                    :prefix
+                                    :suffix])
+                      (assoc :validation (when error {:status :error})
                              :on-change #(on-change (j/get-in % [:currentTarget :value]))))]]))
 
 (defn integer-input
@@ -147,7 +159,7 @@
                 (doall)))]))
 
 (defn map-input
-  [{:keys [index value error inputs id title subtitle]}]
+  [{:keys [index value error inputs id title subtitle foo]}]
   [:div {:class-name (tw (concat
                           [:p-4]
                           (when (and index (pos? index))
@@ -166,10 +178,7 @@
           (sort-by (comp :index :props second))
           (map (fn [[_ {:keys [render props]}]]
                  [render props]))
-          (doall))
-     (when (and error (seq value))
-       [[:div {:class-name (tw [:mt-2])}
-         [error-typography {:error error}]]])))])
+          (doall))))])
 
 (defn sequential-input
   [{:keys [inputs on-change value error] :as props}]
@@ -178,10 +187,9 @@
                      (map (fn [{:keys [render props]}]
                             [render props]))
                      (doall))
-                [[:button {:on-click #(on-change (conj value nil))} "Add"]]
-                (when error
-                  [[:div {:class-name (tw [:mt-2])}
-                    [error-typography {:error error}]]]))))
+                [[button/button {:type :primary
+                                 :on-click #(on-change (conj value nil))}
+                  "Add"]])))
 
 (f/reg-input :ventus/int integer-input)
 (f/reg-input :ventus/number integer-input)

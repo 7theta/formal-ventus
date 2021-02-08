@@ -1,5 +1,6 @@
 (ns formal-ventus.example.views
   (:require [formal-ventus.core :as fv]
+            [ventus-ui.button :as button]
             [inflections.core :as inflections]
             [sci.core]
             [tailwind.core :refer [tw]]
@@ -11,6 +12,8 @@
    {:schema [:map
              [:first-name :string]
              [:last-name :string]
+             [:country [:enum :canada :united-states]]
+             [:enabled :boolean]
              [:about {:optional true
                       :placeholder "About"}
               :string]]
@@ -44,22 +47,30 @@
                [:email :string]]]]
     :on-change on-change}])
 
+(defn sequences-example
+  [{:keys [on-change]}]
+  [fv/form
+   {:schema [:map
+             [:list-of-strings
+              [:sequential :string]]]
+    :on-change on-change}])
 
 (defn custom-errors-example
   [{:keys [on-change]}]
   [fv/form
    {:schema [:map
              [:username
-              [:string {:min 1
+              [:string {:min 10
                         :error/fn '(fn [{:keys [value]} _]
-                                     "Must be at least 1 character")}]]]
+                                     "Must be at least 10 characters.")}]]]
     :on-change on-change}])
 
 (defn custom-schema-types-example
   [{:keys [on-change]}]
   [fv/form
    {:schema [:map
-             [:age {:input :number}
+             [:age {:default-value 0
+                    :input :number}
               [:fn {:error/fn '(fn [{:keys [value]} _]
                                  (str value " should be > 0"))}
                pos?]]]
@@ -84,7 +95,7 @@
                                                        (when (and index (pos? index))
                                                          [:mt-2])))}
                                 (into
-                                 [:div "Custom Map Input"]
+                                 [:div "Custom Map Component"]
                                  (concat
                                   (->> inputs
                                        (sort-by (comp :index :props second))
@@ -99,10 +110,11 @@
 (defn main-panel
   []
   (let [this (r/current-component)
-        {:keys [example value]} (r/state this)
+        {:keys [example value] :or {example :basic}} (r/state this)
         examples [[:basic basic-example]
                   [:default-value default-value-example]
                   [:nested-maps nested-maps-example]
+                  [:sequences sequences-example]
                   [:custom-errors custom-errors-example]
                   [:custom-schema-types custom-schema-types-example]
                   [:custom-layouts custom-layouts-example]]
@@ -110,12 +122,14 @@
     [:div {:class-name "w-full"}
      [:div {:class-name (tw [:flex :flex-row :items-start])}
       [:div {:class-name (tw [:max-w-md :w-full])}
+
        [fv/form
         {:on-change (fn [{:keys [example]}]
                       (r/set-state this {:example example}))
          :schema [:map
                   [:example {:default-value :basic}
                    (into [:enum] (map first examples))]]}]
+
        (when-let [c (get examples-map example)]
          [c {:key example
              :on-change #(r/set-state this {:value %})}])]
