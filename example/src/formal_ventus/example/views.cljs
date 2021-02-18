@@ -16,7 +16,8 @@
              [:enabled :boolean]
              [:about {:optional true
                       :placeholder "About"}
-              :string]]
+              :string]
+             [:toggle :boolean]]
     :on-change on-change}])
 
 (defn default-value-example
