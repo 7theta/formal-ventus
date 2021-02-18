@@ -117,8 +117,13 @@
 (defn boolean-input
   [{:keys [on-change default-value] :as props}]
   (let [this (r/current-component)
-        {:keys [checked] :or {checked default-value}} (r/state this)
+        {:keys [checked reported-default]
+         :or {checked default-value}} (r/state this)
         {:keys [error] :as props} (update-error props)]
+    (when (and (not (contains? props :default-value))
+               (not reported-default))
+      (r/set-state this {:reported-default true})
+      (on-change false))
     [form-item props
      [:div {:class-name (tw [:mr-2])}
       [switch/switch {:checked (boolean checked)
